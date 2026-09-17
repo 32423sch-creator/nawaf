@@ -1,6 +1,5 @@
 name: TASI Stock Filter CI/CD
 
-# تشغيل الأتمتة عند تحديث فرع main أو master
 on:
   push:
     branches: [ "main", "master" ]
@@ -16,24 +15,29 @@ jobs:
     - name: Checkout Repository Code
       uses: actions/checkout@v4
 
-    # 2. إعداد بيئة عمل بايثون (تثبيت إصدار مستقر 3.10)
+    # 2. إعداد بيئة عمل بايثون 3.10
     - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-        cache: 'pip' # تفعيل التخزين المؤقت لتسريع عملية التثبيت في المرات القادمة
+        # تمت إزالة خاصية الكاش المؤقت هنا لتفادي الخطأ إذا كان ملف المتطلبات مفقوداً
 
-    # 3. تحديث أداة pip وتثبيت مكتبات المشروع الأساسية
+    # 3. تحديث أداة pip وتثبيت المكتبات (فقط إذا كان الملف موجوداً)
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f requirements.txt ]; then 
+          pip install -r requirements.txt
+        else 
+          echo "⚠️ تنبيه: ملف requirements.txt غير موجود بعد، سيتم تثبيت المكتبات الأساسية للفحص."
+          pip install streamlit yfinance pandas pandas-ta
+        fi
 
-    # 4. فحص جودة الكود وبنيته (Code Syntax Linting)
+    # 4. فحص جودة الكود وبنيته البرمجية
     - name: Lint and Compile Check
       run: |
         python -m py_compile app.py
 
-    # 5. رسالة نجاح في حال اجتياز الفحص بنجاح
+    # 5. رسالة نجاح الفحص
     - name: Workflow Status
-      run: echo "🎉 تم فحص الكود بنجاح وهو جاهز للنشر التلقائي على Streamlit Cloud!"
+      run: echo "🎉 تم فحص الكود واجتياز اختبارات البناء بنجاح!"
